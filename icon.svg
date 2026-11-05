@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <title>WMO Wind</title>
+  <rect width="128" height="128" rx="25" fill="#e3edf1"/>
+  <!-- three-cup anemometer seen from above -->
+  <path d="M37.33 48.00L37.33 34.67" stroke="#15191c" stroke-width="5.333333333333333" stroke-linecap="round"/>
+  <path d="M37.33 34.67A10.31111111111111 10.31111111111111 0 0 1 37.33 14.04Z" fill="#15191c"/>
+  <path d="M37.33 48.00L48.88 54.67" stroke="#15191c" stroke-width="5.333333333333333" stroke-linecap="round"/>
+  <path d="M48.88 54.67A10.31111111111111 10.31111111111111 0 0 1 66.74 64.98Z" fill="#15191c"/>
+  <path d="M37.33 48.00L25.79 54.67" stroke="#15191c" stroke-width="5.333333333333333" stroke-linecap="round"/>
+  <path d="M25.79 54.67A10.31111111111111 10.31111111111111 0 0 1 7.93 64.98Z" fill="#15191c"/>
+  <circle cx="37.33" cy="48.00" r="6.3999999999999995" fill="#15191c"/>
+  <!-- wind -->
+  <path d="M78.2 23.1h24.9a7.1 7.1 0 1 0-7.1-7.1" fill="none" stroke="#1d6fa5" stroke-width="5.33" stroke-linecap="round"/>
+  <path d="M83.6 39.1h17.8" fill="none" stroke="#1d6fa5" stroke-width="5.33" stroke-linecap="round"/>
+  <!-- stopwatch with the WMO 10-minute averaging window -->
+  <rect x="85" y="55" width="12" height="7" rx="2.5" fill="#15191c"/>
+  <path d="M88 61h6v5h-6z" fill="#15191c"/>
+  <circle cx="91" cy="91" r="25" fill="#fbfcfa" stroke="#15191c" stroke-width="5"/>
+  <path d="M91 91L91.00 70.00A21 21 0 0 1 109.19 80.50Z" fill="#b0287a"/>
+  <path d="M91.00 69.00L91.00 74.00" stroke="#15191c" stroke-width="3" stroke-linecap="round"/><path d="M113.00 91.00L108.00 91.00" stroke="#15191c" stroke-width="3" stroke-linecap="round"/><path d="M91.00 113.00L91.00 108.00" stroke="#15191c" stroke-width="3" stroke-linecap="round"/><path d="M69.00 91.00L74.00 91.00" stroke="#15191c" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="91" cy="91" r="3.5" fill="#15191c"/>
+</svg>

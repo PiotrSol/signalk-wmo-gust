@@ -1,6 +1,6 @@
 {
   "name": "signalk-wmo-gust",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "WMO-standard 10-minute mean wind, mean direction and 3-second gust for Signal K, with 1/3/6-hour gust maxima for comparing forecasts with measured wind",
   "main": "index.js",
   "scripts": {
@@ -31,9 +31,11 @@
     "index.js",
     "README.md",
     "CHANGELOG.md",
-    "LICENSE"
+    "LICENSE",
+    "icon.svg"
   ],
   "signalk": {
-    "displayName": "WMO Wind (10 min mean, 3 s gust)"
+    "displayName": "WMO Wind (10 min mean, 3 s gust)",
+    "appIcon": "./icon.svg"
   }
 }
