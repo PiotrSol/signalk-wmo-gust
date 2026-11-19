@@ -25,58 +25,58 @@
     display: flex; flex-direction: column; overflow: hidden;
     -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent;
   }
-  header { display: flex; flex-wrap: wrap; align-items: stretch; padding: 8px 12px 0; }
-  .now { background: var(--panel); border-radius: 6px; padding: 6px 12px 8px; margin: 0 8px 8px 0; min-width: 118px; }
-  .now .label { font-size: 14px; color: var(--muted); }
-  .now .value { font-size: 34px; font-weight: 500; line-height: 1.1; white-space: nowrap; }
-  .now .value small { font-size: 15px; font-weight: 400; color: var(--muted); margin-left: 3px; }
+  header { display: flex; flex-wrap: wrap; align-items: stretch; padding: 0.5rem 0.75rem 0; }
+  .now { background: var(--panel); border-radius: 0.375rem; padding: 0.375rem 0.75rem 0.5rem; margin: 0 0.5rem 0.5rem 0; min-width: 7.375rem; }
+  .now .label { font-size: 0.875rem; color: var(--muted); }
+  .now .value { font-size: 2.125rem; font-weight: 500; line-height: 1.1; white-space: nowrap; }
+  .now .value small { font-size: 0.9375rem; font-weight: 400; color: var(--muted); margin-left: 0.1875rem; }
   .now.mean .value { color: var(--mean); }
   .now.means .value { color: var(--means); }
   .now.gust .value { color: var(--gust); }
   .now.peak .value { color: var(--peak); }
   .now.dir .value { color: var(--dir); }
-  nav { display: flex; flex-wrap: wrap; align-items: center; padding: 0 12px; }
-  .group { display: flex; align-items: center; margin: 0 16px 8px 0; }
-  .group span { font-size: 14px; color: var(--muted); margin-right: 8px; }
+  nav { display: flex; flex-wrap: wrap; align-items: center; padding: 0 0.75rem; }
+  .group { display: flex; align-items: center; margin: 0 1rem 0.5rem 0; }
+  .group span { font-size: 0.875rem; color: var(--muted); margin-right: 0.5rem; }
   button {
-    font: inherit; font-size: 17px; min-height: 44px; min-width: 56px; padding: 0 14px;
+    font: inherit; font-size: 1.0625rem; min-height: 2.75rem; min-width: 3.5rem; padding: 0 0.875rem;
     border: 0; background: var(--btn); color: var(--ink); cursor: pointer;
   }
-  .seg button { border-radius: 0; margin-right: 1px; }
-  .seg button:first-of-type { border-radius: 6px 0 0 6px; }
-  .seg button:last-of-type { border-radius: 0 6px 6px 0; margin-right: 0; }
+  .seg button { border-radius: 0; margin-right: 0.0625rem; }
+  .seg button:first-of-type { border-radius: 0.375rem 0 0 0.375rem; }
+  .seg button:last-of-type { border-radius: 0 0.375rem 0.375rem 0; margin-right: 0; }
   button.on { background: var(--btn-on); color: var(--btn-on-ink); }
-  button:focus-visible { outline: 3px solid var(--gust); outline-offset: 2px; }
-  #night { border-radius: 6px; }
-  main { flex: 1; display: flex; flex-direction: column; min-height: 0; margin: 0 12px; background: var(--panel); border-radius: 6px; position: relative; }
+  button:focus-visible { outline: 0.1875rem solid var(--gust); outline-offset: 0.125rem; }
+  #night { border-radius: 0.375rem; }
+  main { flex: 1; display: flex; flex-direction: column; min-height: 0; margin: 0 0.75rem; background: var(--panel); border-radius: 0.375rem; position: relative; }
   .plot { position: relative; min-height: 0; }
   #speedWrap { flex: 1; }
-  #dirWrap { height: 74px; border-top: 1px solid var(--rule); }
-  .now .value svg { width: 26px; height: 26px; vertical-align: -3px; margin-left: 6px; }
+  #dirWrap { height: 4.625rem; border-top: 0.0625rem solid var(--rule); }
+  .now .value svg { width: 1.625rem; height: 1.625rem; vertical-align: -3px; margin-left: 0.375rem; }
   canvas { position: absolute; left: 0; top: 0; width: 100%; height: 100%; touch-action: none; }
-  #legend { position: absolute; right: 14px; top: 8px; font-size: 14px; color: var(--muted); text-align: right; pointer-events: none; background: var(--panel); padding: 2px 6px; border-radius: 4px; opacity: 0.92; }
-  #legend i { display: inline-block; width: 22px; height: 0; border-top: 3px solid; vertical-align: middle; margin: 0 5px 0 12px; }
+  #legend { position: absolute; right: 0.875rem; top: 0.5rem; font-size: 0.875rem; color: var(--muted); text-align: right; pointer-events: none; background: var(--panel); padding: 0.125rem 0.375rem; border-radius: 0.25rem; opacity: 0.92; }
+  #legend i { display: inline-block; width: 1.375rem; height: 0; border-top: 0.1875rem solid; vertical-align: middle; margin: 0 0.3125rem 0 0.75rem; }
   #readout {
-    position: absolute; top: 8px; display: none; background: var(--panel); border: 1px solid var(--rule);
-    border-radius: 6px; padding: 6px 10px; font-size: 15px; line-height: 1.45; pointer-events: none; white-space: nowrap;
+    position: absolute; top: 0.5rem; display: none; background: var(--panel); border: 0.0625rem solid var(--rule);
+    border-radius: 0.375rem; padding: 0.375rem 0.625rem; font-size: 0.9375rem; line-height: 1.45; pointer-events: none; white-space: nowrap;
   }
   #readout b { font-weight: 500; }
-  #message { position: absolute; left: 0; right: 0; top: 40%; text-align: center; padding: 0 24px; font-size: 18px; color: var(--muted); }
-  footer { padding: 8px 12px 10px; font-size: 15px; color: var(--muted); min-height: 36px; }
+  #message { position: absolute; left: 0; right: 0; top: 40%; text-align: center; padding: 0 1.5rem; font-size: 1.125rem; color: var(--muted); }
+  footer { padding: 0.5rem 0.75rem 0.625rem; font-size: 0.9375rem; color: var(--muted); min-height: 2.25rem; }
   footer b { color: var(--ink); font-weight: 500; }
   @media (max-width: 760px), (max-height: 560px) {
-    header { flex-wrap: nowrap; padding: 6px 8px 0; }
-    .now { flex: 1 1 0; min-width: 0; padding: 3px 6px 4px; margin: 0 4px 6px 0; }
-    .now .label { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .now .value { font-size: 21px; }
-    .now .value small { font-size: 12px; }
-    nav { padding: 0 8px; }
-    .group { margin: 0 8px 6px 0; }
-    .group span { font-size: 12px; margin-right: 4px; }
-    button { font-size: 14px; min-height: 40px; min-width: 40px; padding: 0 8px; }
-    main { margin: 0 8px; }
-    #legend, #readout { font-size: 12px; }
-    footer { font-size: 13px; padding: 4px 8px 6px; min-height: 0; }
+    header { flex-wrap: nowrap; padding: 0.375rem 0.5rem 0; }
+    .now { flex: 1 1 0; min-width: 0; padding: 0.1875rem 0.375rem 0.25rem; margin: 0 0.25rem 0.375rem 0; }
+    .now .label { font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .now .value { font-size: 1.3125rem; }
+    .now .value small { font-size: 0.75rem; }
+    nav { padding: 0 0.5rem; }
+    .group { margin: 0 0.5rem 0.375rem 0; }
+    .group span { font-size: 0.75rem; margin-right: 0.25rem; }
+    button { font-size: 0.875rem; min-height: 2.5rem; min-width: 2.5rem; padding: 0 0.5rem; }
+    main { margin: 0 0.5rem; }
+    #legend, #readout { font-size: 0.75rem; }
+    footer { font-size: 0.8125rem; padding: 0.25rem 0.5rem 0.375rem; min-height: 0; }
   }
 </style>
 </head>
@@ -304,6 +304,14 @@
     return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 2.5 ? 2.5 : m <= 5 ? 5 : 10) * p
   }
 
+  // Large chartplotter screens report a big CSS viewport: scale the whole UI to it.
+  var UI = 1
+  function applyScale () {
+    var w = window.innerWidth || 1280; var h = window.innerHeight || 720
+    UI = Math.max(1, Math.min(w / 1280, h / 720, 2.5))
+    document.documentElement.style.fontSize = (16 * UI) + 'px'
+  }
+  applyScale()
   var PAD = { l: 46, r: 14, t: 12, b: 28 }
   var geo = null
 
@@ -320,24 +328,24 @@
     var max = 0
     points.forEach(function (p) { list.forEach(function (s) { var v = s.get(p); if (v !== null && v > max) max = v }) })
     var top = Math.max(conv(max) * 1.08, state.unit === 'kn' ? 10 : 5)
-    var step = niceStep(top, Math.max(3, Math.floor((S.h - PAD.t - PAD.b) / 55)))
+    var step = niceStep(top, Math.max(3, Math.floor((S.h - (PAD.t + PAD.b) * UI) / (55 * UI))))
     top = Math.ceil(top / step) * step
-    var x0 = PAD.l; var x1 = S.w - PAD.r; var y0 = S.h - PAD.b; var y1 = PAD.t
+    var x0 = PAD.l * UI; var x1 = S.w - PAD.r * UI; var y0 = S.h - PAD.b * UI; var y1 = PAD.t * UI
     var X = function (t) { return x0 + (t - start) / (end - start) * (x1 - x0) }
     var Y = function (ms) { return y0 - conv(ms) / top * (y0 - y1) }
     geo = { start: start, end: end, x0: x0, x1: x1, X: X }
 
-    c.font = '13px Roboto, Arial, sans-serif'
+    c.font = (13 * UI) + 'px Roboto, Arial, sans-serif'
     c.lineWidth = 1
     c.fillStyle = muted
     c.textAlign = 'right'; c.textBaseline = 'middle'
     for (var v = 0; v <= top + 1e-9; v += step) {
       var y = Math.round(y0 - v / top * (y0 - y1)) + 0.5
       c.strokeStyle = rule; c.beginPath(); c.moveTo(x0, y); c.lineTo(x1, y); c.stroke()
-      c.fillText(String(Math.round(v * 10) / 10), x0 - 6, y)
+      c.fillText(String(Math.round(v * 10) / 10), x0 - 6 * UI, y)
     }
     c.textAlign = 'left'; c.textBaseline = 'top'
-    c.fillText(unitName(), 4, 2)
+    c.fillText(unitName(), 4 * UI, 2 * UI)
     timeAxis(c, r, start, end, X, y1, y0, rule, muted, true)
 
     var gap = r.res * 1000 * 2.5
@@ -352,10 +360,10 @@
     var D = setup($('dir'))
     var d = D.c
     timeAxis(d, r, start, end, X, 0, D.h, rule, muted, false)
-    var slots = Math.max(4, Math.floor((x1 - x0) / 52))
+    var slots = Math.max(4, Math.floor((x1 - x0) / (52 * UI)))
     var span = (end - start) / slots
-    var len = Math.min(30, D.h - 30)
-    d.font = '12px Roboto, Arial, sans-serif'; d.textAlign = 'center'; d.textBaseline = 'bottom'
+    var len = Math.min(30 * UI, D.h - 30 * UI)
+    d.font = (12 * UI) + 'px Roboto, Arial, sans-serif'; d.textAlign = 'center'; d.textBaseline = 'bottom'
     for (var k2 = 0; k2 < slots; k2++) {
       var ts = start + k2 * span; var te = ts + span
       var vx = 0; var vy = 0; var n = 0
@@ -366,9 +374,9 @@
       })
       if (!n) continue
       var from = Math.atan2(vx, vy)
-      arrow(d, X(ts + span / 2), 6 + len / 2, len, from, css('dir'))
+      arrow(d, X(ts + span / 2), 6 * UI + len / 2, len, from, css('dir'))
       d.fillStyle = muted
-      d.fillText(pad3(deg(from)) + '°', X(ts + span / 2), D.h - 4)
+      d.fillText(pad3(deg(from)) + '°', X(ts + span / 2), D.h - 4 * UI)
     }
 
     if (selected >= 0 && points[selected]) cross(c, d, list, X, Y, S, D, ink)
@@ -383,16 +391,16 @@
     for (; t <= end; t += r.tick) {
       var x = Math.round(X(t)) + 0.5
       var midnight = ((t + off) % 86400000) === 0
-      c.strokeStyle = rule; c.lineWidth = midnight ? 2 : 1
+      c.strokeStyle = rule; c.lineWidth = (midnight ? 2 : 1) * UI
       c.beginPath(); c.moveTo(x, yTop); c.lineTo(x, yBottom); c.stroke()
-      if (labels) { c.fillStyle = muted; c.fillText(midnight && r.tick >= 3600000 ? dm(t) : hm(t), x, yBottom + 7) }
+      if (labels) { c.fillStyle = muted; c.fillText(midnight && r.tick >= 3600000 ? dm(t) : hm(t), x, yBottom + 7 * UI) }
     }
   }
 
   function line (c, s, X, Y, gap) {
-    c.strokeStyle = css(s.color); c.lineWidth = s.width
+    c.strokeStyle = css(s.color); c.lineWidth = s.width * UI
     c.lineJoin = 'round'; c.lineCap = 'round'
-    if (c.setLineDash) c.setLineDash(s.dash || [])
+    if (c.setLineDash) c.setLineDash((s.dash || []).map(function (v) { return v * UI }))
     c.beginPath()
     var prev = null
     points.forEach(function (p) {
@@ -431,8 +439,8 @@
     var a = from + Math.PI // the way the wind blows
     var ux = Math.sin(a); var uy = -Math.cos(a)
     var hx = x + ux * len / 2; var hy = y + uy * len / 2
-    var head = Math.max(6, len * 0.32)
-    c.strokeStyle = color; c.fillStyle = color; c.lineWidth = 2.5; c.lineCap = 'round'
+    var head = Math.max(6 * UI, len * 0.32)
+    c.strokeStyle = color; c.fillStyle = color; c.lineWidth = 2.5 * UI; c.lineCap = 'round'
     c.beginPath(); c.moveTo(x - ux * len / 2, y - uy * len / 2); c.lineTo(hx - ux * head * 0.6, hy - uy * head * 0.6); c.stroke()
     c.beginPath()
     c.moveTo(hx, hy)
@@ -451,7 +459,7 @@
     var p = points[selected]
     var x = Math.round(X(p.t)) + 0.5
     ;[[c, S.h], [d, D.h]].forEach(function (a) {
-      a[0].strokeStyle = ink; a[0].lineWidth = 1
+      a[0].strokeStyle = ink; a[0].lineWidth = UI
       a[0].beginPath(); a[0].moveTo(x, 0); a[0].lineTo(x, a[1]); a[0].stroke()
     })
     var rows = ['<b>' + (state.range === '72' ? dm(p.t) + ' ' : '') + hm(p.t) + '</b>']
@@ -459,7 +467,7 @@
       var v = s.get(p)
       if (v === null) return
       c.fillStyle = css(s.color)
-      c.beginPath(); c.arc(x, Y(v), 4, 0, 2 * Math.PI); c.fill()
+      c.beginPath(); c.arc(x, Y(v), 4 * UI, 0, 2 * Math.PI); c.fill()
       rows.push(s.name + ' <b style="color:' + css(s.color) + '">' + fmt(v) + '</b> ' + unitName())
     })
     if (p.dir !== null) {
@@ -555,7 +563,7 @@
   })
 
   var resizeTimer = null
-  window.addEventListener('resize', function () { clearTimeout(resizeTimer); resizeTimer = setTimeout(draw, 150) })
+  window.addEventListener('resize', function () { clearTimeout(resizeTimer); resizeTimer = setTimeout(function () { applyScale(); draw() }, 150) })
   setInterval(function () { if (selected < 0) draw() }, 30000)
 
   syncButtons()
