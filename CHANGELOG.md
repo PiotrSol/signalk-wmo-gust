@@ -3,7 +3,20 @@
 All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.4.1] - 2026-11-19
+## 0.4.2
+
+_2026-11-19_
+
+### Added
+- Screenshots of the wind history app for the Signal K App Store.
+- Signal K plugin CI (the shared `plugin-ci.yml` workflow), so the App Store shows test results for Linux, Raspberry Pi, macOS and Windows.
+
+### Changed
+- Changelog headings use the plain `## x.y.z` form that the App Store reads.
+
+## 0.4.1
+
+_2026-11-19_
 
 ### Added
 - The onboard time zone is published as `environment.time.timezoneOffset` and `environment.time.timezoneRegion` (setting **Onboard time zone**; empty uses the server's time zone, `none` turns it off).
@@ -12,7 +25,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - The wind history app shows local time on chartplotters whose browser runs on UTC, such as Garmin OneHelm: it uses the onboard time zone from Signal K.
 - The app no longer shows stale data on browsers that cache requests, and reloads the charts when it comes back to the foreground.
 
-## [0.4.0] - 2026-11-19
+## 0.4.0
+
+_2026-11-19_
 
 ### Added
 - **Wind history web app** (Signal K Web Apps → WMO Wind): charts of the last 1, 3, 24 or 72 hours with the 10-minute mean at 10 m and at sensor height, gusts as WMO 3-second gusts, absolute maxima or both, at 10 m or at sensor height, and arrows for the mean direction. Built for Garmin chartplotters (OneHelm) as well as browsers: touch controls, night mode, and no login needed, as it reads the Signal K History API.
@@ -23,18 +38,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 - The Web App and App Store name is now **WMO Wind**.
 
-## [0.3.1] - 2026-11-05
+## 0.3.1
+
+_2026-11-05_
 
 ### Added
 - App icon for the Signal K App Store: a three-cup anemometer and a stopwatch showing the WMO 10-minute averaging window.
 
-## [0.3.0] - 2026-11-04
+## 0.3.0
+
+_2026-11-04_
 
 ### Added
 - WMO 10-minute mean wind direction (`directionOverGroundMeanWMO`, or `directionTrueMeanWMO` for water-referenced wind), in radians from true north. It is a vector mean weighted by wind speed, so 350° and 10° average to 0°, and it is not published in a calm (mean below 0.5 m/s).
 - **Wind direction source path** setting, default `environment.wind.directionTrue`.
 
-## [0.2.0] - 2026-11-04
+## 0.2.0
+
+_2026-11-04_
 
 ### Added
 - Highest WMO gust of the last 1, 3 and 6 hours (`…Max1hWMO`, `…Max3hWMO`, `…Max6hWMO`), for comparison with forecast gusts, which are maxima since the model's previous output step.
@@ -49,7 +70,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Fixed
 - A delta timestamp of exactly 0 ms was taken as missing.
 
-## [0.1.0] - 2026-11-03
+## 0.1.0
+
+_2026-11-03_
 
 ### Added
 - First version: WMO 10-minute mean wind and 3-second running-mean gust, with power-law height correction from a configured height or `design.airHeight`.

@@ -87,6 +87,8 @@ In a current the two differ by roughly the current's speed. In 2 kn of tide, the
 
 ## Wind history web app
 
+![Wind history app: 24 hours of mean wind at 10 m and at sensor height, WMO gusts and absolute maxima, with direction arrows](screenshots/wind-24h.png)
+
 The plugin includes a web app, **WMO Wind**, under **Web Apps** in the Signal K admin, at `/signalk-wmo-gust/`. It charts the last **1, 3, 24 or 72 hours**:
 
 - the 10-minute **mean wind at 10 m** and **at sensor height**;
