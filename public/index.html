@@ -149,7 +149,8 @@
 
   function getJSON (url, cb) {
     var x = new XMLHttpRequest()
-    x.open('GET', url)
+    // Some chartplotter browsers cache XHR responses (Signal K sends no Cache-Control).
+    x.open('GET', url + (url.indexOf('?') < 0 ? '?' : '&') + '_=' + Date.now())
     x.timeout = 20000
     x.onload = function () {
       if (x.status !== 200) return cb(new Error('HTTP ' + x.status))
@@ -565,6 +566,11 @@
   var resizeTimer = null
   window.addEventListener('resize', function () { clearTimeout(resizeTimer); resizeTimer = setTimeout(function () { applyScale(); draw() }, 150) })
   setInterval(function () { if (selected < 0) draw() }, 30000)
+  // Coming back to the app (OneHelm keeps it in the background): reload at once.
+  function wake () { if (!document.hidden) loadHistory() }
+  document.addEventListener('visibilitychange', wake)
+  window.addEventListener('focus', wake)
+  window.addEventListener('pageshow', function (e) { if (e.persisted) loadHistory() })
 
   syncButtons()
   draw()
