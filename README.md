@@ -87,7 +87,7 @@ In a current the two differ by roughly the current's speed. In 2 kn of tide, the
 
 ## Wind history web app
 
-The plugin includes a web app, **WMO Wind**, under **Web Apps** in the Signal K admin, at `/signalk-wmo-gust/`. It charts the last **3, 24 or 72 hours**:
+The plugin includes a web app, **WMO Wind**, under **Web Apps** in the Signal K admin, at `/signalk-wmo-gust/`. It charts the last **1, 3, 24 or 72 hours**:
 
 - the 10-minute **mean wind at 10 m** and **at sensor height**;
 - **gusts**: the WMO 3-second gust, the absolute maximum (highest single sample), or both, at 10 m or at sensor height;
@@ -97,7 +97,7 @@ Touch or click a chart to read the values at that moment. Units are knots or m/s
 
 The app reads the **Signal K History API**, so a history provider must record this plugin's paths, for example **signalk-questdb**. It works without logging in, so it can run on Garmin chartplotters with OneHelm, for example through **signalk-garmin-onehelm**. It uses no external libraries or fonts, so it works offline.
 
-Points are averages (mean wind) and maxima (gusts, from the 1-minute paths) over 1 minute for 3 hours, 5 minutes for 24 hours and 15 minutes for 72 hours. Before version 0.4.0 the plugin didn't publish the absolute maximum; for that time the app takes it from the recorded wind samples, which a history provider may store at a lower rate, so it can read low.
+Points are averages (mean wind) and maxima (gusts, from the 1-minute paths) over 1 minute for 1 and 3 hours, 5 minutes for 24 hours and 15 minutes for 72 hours. Before version 0.4.0 the plugin didn't publish the absolute maximum; for that time the app takes it from the recorded wind samples, which a history provider may store at a lower rate, so it can read low.
 
 ## Comparing with forecasts
 

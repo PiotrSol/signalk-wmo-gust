@@ -90,7 +90,7 @@
 </header>
 <nav>
   <div class="group seg" data-key="range"><span>Period</span>
-    <button data-v="3">3 h</button><button data-v="24">24 h</button><button data-v="72">72 h</button></div>
+    <button data-v="1">1 h</button><button data-v="3">3 h</button><button data-v="24">24 h</button><button data-v="72">72 h</button></div>
   <div class="group seg" data-key="gust"><span>Gusts</span>
     <button data-v="wmo">WMO 3 s</button><button data-v="peak">Absolute max</button><button data-v="both">Both</button></div>
   <div class="group seg" data-key="gustH"><span>Gusts at</span>
@@ -108,6 +108,7 @@
 'use strict'
 ;(function () {
   var RANGES = {
+    1: { duration: 'PT1H', res: 60, tick: 10 * 60000 },
     3: { duration: 'PT3H', res: 60, tick: 30 * 60000 },
     24: { duration: 'PT24H', res: 300, tick: 3 * 3600000 },
     72: { duration: 'PT72H', res: 900, tick: 12 * 3600000 }
@@ -177,7 +178,7 @@
         gotHistory(key, r, d2, false)
       })
     })
-    historyTimer = setTimeout(loadHistory, key === '3' ? 60000 : 180000)
+    historyTimer = setTimeout(loadHistory, key === '1' || key === '3' ? 60000 : 180000)
   }
 
   function gotHistory (key, r, d, withNew) {
