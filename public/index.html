@@ -51,7 +51,8 @@
   main { flex: 1; display: flex; flex-direction: column; min-height: 0; margin: 0 12px; background: var(--panel); border-radius: 6px; position: relative; }
   .plot { position: relative; min-height: 0; }
   #speedWrap { flex: 1; }
-  #dirWrap { height: 24%; min-height: 70px; border-top: 1px solid var(--rule); }
+  #dirWrap { height: 74px; border-top: 1px solid var(--rule); }
+  .now .value svg { width: 26px; height: 26px; vertical-align: -3px; margin-left: 6px; }
   canvas { position: absolute; left: 0; top: 0; width: 100%; height: 100%; touch-action: none; }
   #legend { position: absolute; right: 14px; top: 8px; font-size: 14px; color: var(--muted); text-align: right; pointer-events: none; background: var(--panel); padding: 2px 6px; border-radius: 4px; opacity: 0.92; }
   #legend i { display: inline-block; width: 22px; height: 0; border-top: 3px solid; vertical-align: middle; margin: 0 5px 0 12px; }
@@ -116,11 +117,13 @@
     ground: {
       mean: 'environment.wind.speedOverGroundMeanWMO', gust: 'environment.wind.gustOverGroundWMO',
       peak: 'environment.wind.gustOverGroundPeak', raw: 'environment.wind.speedOverGround',
+      gust1: 'environment.wind.gustOverGroundMax1minWMO', peak1: 'environment.wind.gustOverGroundPeak1min',
       dir: 'environment.wind.directionOverGroundMeanWMO'
     },
     water: {
       mean: 'environment.wind.speedTrueMeanWMO', gust: 'environment.wind.gustTrueWMO',
       peak: 'environment.wind.gustTruePeak', raw: 'environment.wind.speedTrue',
+      gust1: 'environment.wind.gustTrueMax1minWMO', peak1: 'environment.wind.gustTruePeak1min',
       dir: 'environment.wind.directionTrueMeanWMO'
     }
   }
@@ -158,7 +161,7 @@
 
   function historyUrl (r, withNew) {
     var p = [family.mean + ':average', family.gust + ':max', family.raw + ':max', family.dir + ':last']
-    if (withNew) p.push(family.peak + ':max', FACTOR + ':average')
+    if (withNew) p.push(family.peak + ':max', FACTOR + ':average', family.gust1 + ':max', family.peak1 + ':max')
     return '/signalk/v2/api/history/values?paths=' + p.join(',') + '&duration=' + r.duration + '&resolution=' + r.res
   }
 
@@ -186,8 +189,11 @@
     approxPeak = false
     points = rows.map(function (row) {
       var f = withNew && num(row[6]) ? row[6] : (lastF || liveFactor)
-      var mean = val(row[1]); var gust = val(row[2]); var raw = val(row[3])
-      var peak = withNew ? val(row[5]) : null
+      // Per-point maxima from the 1-minute paths; older history only has the 10-minute ones.
+      var mean = val(row[1]); var raw = val(row[3])
+      var gust1 = withNew ? val(row[7]) : null; var peak1 = withNew ? val(row[8]) : null
+      var gust = gust1 !== null ? gust1 : val(row[2])
+      var peak = peak1 !== null ? peak1 : (withNew ? val(row[5]) : null)
       var p = { t: Date.parse(row[0]) + half, mean: mean, gust: gust, dir: val(row[4]), f: f }
       if (peak !== null) { p.peak = peak } else if (raw !== null) { p.peak = f ? raw * f : raw; approxPeak = true } else p.peak = null
       return p
@@ -231,7 +237,7 @@
     $('nMeanS').innerHTML = liveFactor ? fmt(mean === null ? null : mean / liveFactor, true) : '–'
     $('nGust').innerHTML = fmt(gust === null ? null : gust * s, true)
     $('nPeak').innerHTML = fmt(peak === null ? null : peak * s, true)
-    $('nDir').innerHTML = dir === null ? '–' : pad3(deg(dir)) + '°<small>' + compass(dir) + '</small>'
+    $('nDir').innerHTML = dir === null ? '–' : pad3(deg(dir)) + '°<small>' + compass(dir) + '</small>' + arrowSvg(dir)
   }
 
   // ---- formatting ---------------------------------------------------------
@@ -342,26 +348,30 @@
     })
     for (var i = list.length - 1; i >= 0; i--) line(c, list[i], X, Y, gap)
 
-    // Direction strip
+    // Direction arrows, pointing downwind
     var D = setup($('dir'))
     var d = D.c
-    var dy0 = D.h - 8; var dy1 = 8
-    var DY = function (rad) { return dy0 - (deg(rad) / 360) * (dy0 - dy1) }
-    d.font = '13px Roboto, Arial, sans-serif'
-    d.fillStyle = muted; d.textAlign = 'right'; d.textBaseline = 'middle'
-    ;[[0, 'N'], [90, 'E'], [180, 'S'], [270, 'W'], [360, 'N']].forEach(function (a) {
-      var y = Math.round(dy0 - a[0] / 360 * (dy0 - dy1)) + 0.5
-      d.strokeStyle = rule; d.lineWidth = 1; d.beginPath(); d.moveTo(x0, y); d.lineTo(x1, y); d.stroke()
-      if (D.h > 90 || a[0] % 180 === 0) d.fillText(a[1], x0 - 6, y)
-    })
-    timeAxis(d, r, start, end, X, dy1, dy0, rule, muted, false)
-    d.fillStyle = css('dir')
-    points.forEach(function (p) {
-      if (p.dir === null || p.t < start) return
-      d.beginPath(); d.arc(X(p.t), DY(p.dir), 2.4, 0, 2 * Math.PI); d.fill()
-    })
+    timeAxis(d, r, start, end, X, 0, D.h, rule, muted, false)
+    var slots = Math.max(4, Math.floor((x1 - x0) / 52))
+    var span = (end - start) / slots
+    var len = Math.min(30, D.h - 30)
+    d.font = '12px Roboto, Arial, sans-serif'; d.textAlign = 'center'; d.textBaseline = 'bottom'
+    for (var k2 = 0; k2 < slots; k2++) {
+      var ts = start + k2 * span; var te = ts + span
+      var vx = 0; var vy = 0; var n = 0
+      points.forEach(function (p) {
+        if (p.dir === null || p.t < ts || p.t >= te) return
+        var w = p.mean || 0.1
+        vx += w * Math.sin(p.dir); vy += w * Math.cos(p.dir); n++
+      })
+      if (!n) continue
+      var from = Math.atan2(vx, vy)
+      arrow(d, X(ts + span / 2), 6 + len / 2, len, from, css('dir'))
+      d.fillStyle = muted
+      d.fillText(pad3(deg(from)) + '°', X(ts + span / 2), D.h - 4)
+    }
 
-    if (selected >= 0 && points[selected]) cross(c, d, list, X, Y, DY, S, D, ink)
+    if (selected >= 0 && points[selected]) cross(c, d, list, X, Y, S, D, ink)
     legend(list)
     summary(list)
   }
@@ -417,7 +427,27 @@
     c.globalAlpha = 1
   }
 
-  function cross (c, d, list, X, Y, DY, S, D, ink) {
+  function arrow (c, x, y, len, from, color) {
+    var a = from + Math.PI // the way the wind blows
+    var ux = Math.sin(a); var uy = -Math.cos(a)
+    var hx = x + ux * len / 2; var hy = y + uy * len / 2
+    var head = Math.max(6, len * 0.32)
+    c.strokeStyle = color; c.fillStyle = color; c.lineWidth = 2.5; c.lineCap = 'round'
+    c.beginPath(); c.moveTo(x - ux * len / 2, y - uy * len / 2); c.lineTo(hx - ux * head * 0.6, hy - uy * head * 0.6); c.stroke()
+    c.beginPath()
+    c.moveTo(hx, hy)
+    c.lineTo(hx - ux * head + uy * head * 0.55, hy - uy * head - ux * head * 0.55)
+    c.lineTo(hx - ux * head - uy * head * 0.55, hy - uy * head + ux * head * 0.55)
+    c.closePath(); c.fill()
+  }
+
+  function arrowSvg (from) {
+    return '<svg viewBox="-12 -12 24 24" aria-hidden="true"><g transform="rotate(' + (deg(from) + 180) + ')">' +
+      '<line x1="0" y1="9" x2="0" y2="-3" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>' +
+      '<path d="M0 -11 L6 -2 L-6 -2 Z" fill="currentColor"/></g></svg>'
+  }
+
+  function cross (c, d, list, X, Y, S, D, ink) {
     var p = points[selected]
     var x = Math.round(X(p.t)) + 0.5
     ;[[c, S.h], [d, D.h]].forEach(function (a) {
@@ -433,7 +463,6 @@
       rows.push(s.name + ' <b style="color:' + css(s.color) + '">' + fmt(v) + '</b> ' + unitName())
     })
     if (p.dir !== null) {
-      d.fillStyle = ink; d.beginPath(); d.arc(x, DY(p.dir), 4, 0, 2 * Math.PI); d.fill()
       rows.push('From <b>' + pad3(deg(p.dir)) + '° ' + compass(p.dir) + '</b>')
     }
     var el = $('readout')

@@ -6,8 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [0.4.0] - 2026-11-19
 
 ### Added
-- **Wind history web app** (Signal K Web Apps → WMO Wind): charts of the last 3, 24 or 72 hours with the 10-minute mean at 10 m and at sensor height, gusts as WMO 3-second gusts, absolute maxima or both, at 10 m or at sensor height, and the mean direction. Built for Garmin chartplotters (OneHelm) as well as browsers: touch controls, night mode, and no login needed, as it reads the Signal K History API.
+- **Wind history web app** (Signal K Web Apps → WMO Wind): charts of the last 3, 24 or 72 hours with the 10-minute mean at 10 m and at sensor height, gusts as WMO 3-second gusts, absolute maxima or both, at 10 m or at sensor height, and arrows for the mean direction. Built for Garmin chartplotters (OneHelm) as well as browsers: touch controls, night mode, and no login needed, as it reads the Signal K History API.
 - `gustOverGroundPeak` (or `gustTruePeak`): the highest single wind sample in the last 10 minutes, not averaged, corrected to 10 m.
+- `gustOverGroundMax1minWMO` and `gustOverGroundPeak1min` (or the `True` equivalents): the highest WMO 3-second gust and the highest single sample in the last minute, so that charts show the maximum of each point rather than a 10-minute running maximum.
 - `environment.wind.heightFactorWMO`: the factor used to correct speeds to 10 m, so that sensor-height values can be recovered.
 
 ### Changed

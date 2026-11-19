@@ -17,6 +17,8 @@ With the default source `environment.wind.speedOverGround`:
 | `environment.wind.gustOverGroundMax3hWMO` | Highest WMO gust in the last 3 hours | ECMWF `10fg3`; GFS `GUST` at 3-hourly output |
 | `environment.wind.gustOverGroundMax6hWMO` | Highest WMO gust in the last 6 hours | ECMWF `10fg6` |
 | `environment.wind.gustOverGroundPeak` | Highest single sample in the last 10 minutes, not averaged | Instrument displays' "max wind" |
+| `environment.wind.gustOverGroundMax1minWMO` | Highest WMO 3-second gust in the last minute, for charts | — |
+| `environment.wind.gustOverGroundPeak1min` | Highest single sample in the last minute, for charts | — |
 | `environment.wind.heightFactorWMO` | Factor applied to correct speeds to 10 m; divide by it for sensor-height values | — |
 
 Speeds are in m/s, the Signal K base unit, with metadata describing the reference and the height correction applied. The names follow the source path: `environment.wind.speedTrue` (water-referenced) gives `speedTrueMeanWMO`, `gustTrueWMO`, `gustTrueMax1hWMO` and so on.
@@ -89,13 +91,13 @@ The plugin includes a web app, **WMO Wind**, under **Web Apps** in the Signal K 
 
 - the 10-minute **mean wind at 10 m** and **at sensor height**;
 - **gusts**: the WMO 3-second gust, the absolute maximum (highest single sample), or both, at 10 m or at sensor height;
-- the 10-minute **mean direction**.
+- the 10-minute **mean direction**, as arrows pointing downwind, with the direction the wind comes from in degrees.
 
 Touch or click a chart to read the values at that moment. Units are knots or m/s, and a night mode keeps the screen dark.
 
 The app reads the **Signal K History API**, so a history provider must record this plugin's paths, for example **signalk-questdb**. It works without logging in, so it can run on Garmin chartplotters with OneHelm, for example through **signalk-garmin-onehelm**. It uses no external libraries or fonts, so it works offline.
 
-Points are averages (mean wind) and maxima (gusts) over 1 minute for 3 hours, 5 minutes for 24 hours and 15 minutes for 72 hours. Before version 0.4.0 the plugin didn't publish the absolute maximum; for that time the app takes it from the recorded wind samples, which a history provider may store at a lower rate, so it can read low.
+Points are averages (mean wind) and maxima (gusts, from the 1-minute paths) over 1 minute for 3 hours, 5 minutes for 24 hours and 15 minutes for 72 hours. Before version 0.4.0 the plugin didn't publish the absolute maximum; for that time the app takes it from the recorded wind samples, which a history provider may store at a lower rate, so it can read low.
 
 ## Comparing with forecasts
 

@@ -110,6 +110,19 @@ describe('signalk-wmo-gust', () => {
     plugin.stop()
   })
 
+  it('publishes the gust and peak of the last minute for charts', () => {
+    const { app, plugin } = run({})
+    // A 12 m/s burst at 60–65 s, then steady 5 m/s until 200 s.
+    feed(app, SOG, 200, (s) => (s >= 60 && s < 65 ? 12 : 5))
+    mock.timers.tick(1000)
+    const p = app.published
+    assert.equal(p['environment.wind.gustOverGroundWMO'], 12)
+    assert.equal(p['environment.wind.gustOverGroundMax1minWMO'], 5)
+    assert.equal(p['environment.wind.gustOverGroundPeak'], 12)
+    assert.equal(p['environment.wind.gustOverGroundPeak1min'], 5)
+    plugin.stop()
+  })
+
   it('prefers a configured sensor height over design.airHeight', () => {
     const { app, plugin } = run({ profileExponent: 0.11, sensorHeight: 40 }, 20.3)
     feed(app, SOG, 60, () => 10)
@@ -198,7 +211,7 @@ describe('signalk-wmo-gust', () => {
 
   it('declares units for every published path', () => {
     const { app, plugin } = run({})
-    assert.equal(Object.keys(app.meta).length, 8)
+    assert.equal(Object.keys(app.meta).length, 10)
     const unit = (p) => (p.includes('direction') ? 'rad' : p.includes('Factor') ? 'ratio' : 'm/s')
     for (const [path, m] of Object.entries(app.meta)) assert.equal(m.units, unit(path))
     plugin.stop()

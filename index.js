@@ -34,6 +34,7 @@ const LONGEST_MS = Math.max(...LONG_WINDOWS_H) * 3600000
 const MS_TO_KN = 1.94384
 const DEFAULT_EXPONENT = 0.11 // near-neutral open sea (Hsu et al., 1994)
 const CALM_MS = 0.5 // below this mean speed the direction is undefined
+const RECENT_MS = 60000 // short window for charting gusts and peaks
 const DIR_MAX_AGE_MS = 5000 // a direction older than this is not paired with a speed
 const TWO_PI = 2 * Math.PI
 const FACTOR_PATH = 'environment.wind.heightFactorWMO'
@@ -55,6 +56,7 @@ module.exports = function (app) {
    *   speedTrue       -> gustTrueWMO,       speedTrueMeanWMO       (water)
    *   anything else   -> <source>GustWMO,   <source>MeanWMO
    * The absolute peak is <gust>Peak (gustOverGroundPeak, gustTruePeak).
+   * The same over the last minute, for charts: <gust>Max1minWMO, <gust>Peak1min.
    */
   function outputPaths (src) {
     let base, ref
@@ -68,7 +70,7 @@ module.exports = function (app) {
       base = { gust: `${src}Gust`, mean: `${src}Mean`, dir: `${src}DirectionMean` }
       ref = src
     }
-    const paths = { gust: `${base.gust}WMO`, mean: `${base.mean}WMO`, dir: `${base.dir}WMO`, peak: `${base.gust}Peak`, factor: FACTOR_PATH, ref, long: {} }
+    const paths = { gust: `${base.gust}WMO`, mean: `${base.mean}WMO`, dir: `${base.dir}WMO`, peak: `${base.gust}Peak`, gust1: `${base.gust}Max1minWMO`, peak1: `${base.gust}Peak1min`, factor: FACTOR_PATH, ref, long: {} }
     for (const h of LONG_WINDOWS_H) paths.long[h] = `${base.gust}Max${h}hWMO`
     return paths
   }
@@ -147,6 +149,8 @@ module.exports = function (app) {
       { path: out.mean, description: `WMO mean wind (${out.ref}): 10 min average, ${correction}` },
       { path: out.gust, description: `WMO gust (${out.ref}): highest 3 s running mean in the last 10 min, ${correction}` },
       { path: out.peak, description: `Highest single wind sample (${out.ref}) in the last 10 min, not averaged (not a WMO gust), ${correction}` },
+      { path: out.gust1, description: `Highest WMO 3 s gust (${out.ref}) in the last minute, for charts, ${correction}` },
+      { path: out.peak1, description: `Highest single wind sample (${out.ref}) in the last minute, not averaged, for charts, ${correction}` },
       { path: out.factor, units: 'ratio', description: 'Factor applied to correct wind speeds from the anemometer height to 10 m; divide a corrected value by it for the value at sensor height (1 = no correction)' },
       { path: out.dir, units: 'rad', description: `WMO mean wind direction (${out.ref}, true north, from): speed-weighted vector mean over 10 min; not published in a calm` },
       ...LONG_WINDOWS_H.map((h) => ({
@@ -215,10 +219,17 @@ module.exports = function (app) {
       const mean = k * samples.reduce((a, s) => a + s.v, 0) / samples.length
       const gust = k * gust3s.reduce((m, g) => Math.max(m, g.v), 0)
       const peak = k * samples.reduce((m, s) => Math.max(m, s.v), 0)
+      const recent = now - RECENT_MS
+      let gust1 = 0
+      let peak1 = 0
+      for (let i = gust3s.length - 1; i >= 0 && gust3s[i].t > recent; i--) gust1 = Math.max(gust1, gust3s[i].v)
+      for (let i = samples.length - 1; i >= 0 && samples[i].t > recent; i--) peak1 = Math.max(peak1, samples[i].v)
       const values = [
         { path: out.mean, value: mean },
         { path: out.gust, value: gust },
         { path: out.peak, value: peak },
+        { path: out.gust1, value: k * gust1 },
+        { path: out.peak1, value: k * peak1 },
         { path: out.factor, value: k }
       ]
       // Direction: the vector mean, undefined in a calm or without directions.
