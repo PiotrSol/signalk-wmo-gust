@@ -3,6 +3,15 @@
 All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1] - 2026-11-19
+
+### Added
+- The onboard time zone is published as `environment.time.timezoneOffset` and `environment.time.timezoneRegion` (setting **Onboard time zone**; empty uses the server's time zone, `none` turns it off).
+
+### Fixed
+- The wind history app shows local time on chartplotters whose browser runs on UTC, such as Garmin OneHelm: it uses the onboard time zone from Signal K.
+- The app no longer shows stale data on browsers that cache requests, and reloads the charts when it comes back to the foreground.
+
 ## [0.4.0] - 2026-11-19
 
 ### Added

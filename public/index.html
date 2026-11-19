@@ -253,8 +253,21 @@
   function pad3 (n) { return ('00' + n).slice(-3) }
   function compass (rad) { return COMPASS[Math.round(deg(rad) / 22.5) % 16] }
   function two (n) { return (n < 10 ? '0' : '') + n }
-  function hm (t) { var d = new Date(t); return two(d.getHours()) + ':' + two(d.getMinutes()) }
-  function dm (t) { var d = new Date(t); return two(d.getDate()) + '/' + two(d.getMonth() + 1) }
+  // Onboard time zone from Signal K (environment.time.timezoneOffset): chartplotter
+  // browsers often run on UTC. Without it, the browser's own time zone is used.
+  var tzMs = null
+  function offsetAt (t) { return tzMs !== null ? tzMs : -new Date(t).getTimezoneOffset() * 60000 }
+  function local (t) { return new Date(t + offsetAt(t)) }
+  function hm (t) { var d = local(t); return two(d.getUTCHours()) + ':' + two(d.getUTCMinutes()) }
+  function dm (t) { var d = local(t); return two(d.getUTCDate()) + '/' + two(d.getUTCMonth() + 1) }
+  function loadClock () {
+    getJSON('/signalk/v1/api/vessels/self/environment/time', function (err, tm) {
+      setTimeout(loadClock, 60000)
+      var v = !err && tm && tm.timezoneOffset && num(tm.timezoneOffset.value) ? tm.timezoneOffset.value : null
+      var ms = v === null ? null : (v < 0 ? -1 : 1) * (Math.floor(Math.abs(v) / 100) * 60 + Math.abs(v) % 100) * 60000
+      if (ms !== tzMs) { tzMs = ms; draw() }
+    })
+  }
 
   // ---- series -------------------------------------------------------------
 
@@ -386,7 +399,7 @@
   }
 
   function timeAxis (c, r, start, end, X, yTop, yBottom, rule, muted, labels) {
-    var off = -new Date(start).getTimezoneOffset() * 60000
+    var off = offsetAt(end)
     var t = Math.ceil((start + off) / r.tick) * r.tick - off
     c.textAlign = 'center'; c.textBaseline = 'top'
     for (; t <= end; t += r.tick) {
@@ -574,6 +587,7 @@
 
   syncButtons()
   draw()
+  loadClock()
   loadLive()
   loadHistory()
 })()

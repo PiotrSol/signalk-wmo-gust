@@ -39,6 +39,25 @@ const DIR_MAX_AGE_MS = 5000 // a direction older than this is not paired with a 
 const TWO_PI = 2 * Math.PI
 const FACTOR_PATH = 'environment.wind.heightFactorWMO'
 
+/** Offset of an IANA time zone from UTC at a moment, as Signal K's (-)hhmm number, e.g. 100 or -530. */
+function timezoneOffset (zone, date) {
+  let parts
+  try {
+    parts = new Intl.DateTimeFormat('en-GB', {
+      timeZone: zone, hourCycle: 'h23', year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric'
+    }).formatToParts(date)
+  } catch (e) {
+    return null
+  }
+  const get = (t) => Number(parts.find((p) => p.type === t).value)
+  const local = Date.UTC(get('year'), get('month') - 1, get('day'), get('hour'), get('minute'))
+  const utc = Math.floor(date.getTime() / 60000) * 60000
+  const min = Math.round((local - utc) / 60000)
+  const sign = min < 0 ? -1 : 1
+  const a = Math.abs(min)
+  return sign * (Math.floor(a / 60) * 100 + (a % 60))
+}
+
 module.exports = function (app) {
   const plugin = {
     id: 'signalk-wmo-gust',
@@ -48,6 +67,7 @@ module.exports = function (app) {
 
   let unsubscribes = []
   let timer = null
+  let clockTimer = null
 
   /*
    * Published paths: the reference of the source wind, then the quantity,
@@ -111,6 +131,12 @@ module.exports = function (app) {
         type: 'number',
         title: 'Publish interval (s)',
         default: 1
+      },
+      timezone: {
+        type: 'string',
+        title: 'Onboard time zone (IANA name, e.g. Europe/Madrid)',
+        description: 'Published as environment.time.timezoneOffset and timezoneRegion, so that displays without their own time zone, such as Garmin OneHelm, show local time. Empty: the server\'s time zone. "none": do not publish.',
+        default: ''
       }
     }
   }
@@ -264,14 +290,36 @@ module.exports = function (app) {
         `${rateHz.toFixed(1)} Hz, sensor ${height.h.toFixed(1)} m (${height.src})${filling}${warn}`
       )
     }, (options.publishInterval > 0 ? options.publishInterval : 1) * 1000)
+
+    if (options.timezone !== 'none') {
+      const zone = options.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone
+      const publishClock = () => {
+        const off = timezoneOffset(zone, new Date())
+        if (off === null) return app.error(`Unknown time zone ${zone}`)
+        app.handleMessage(plugin.id, {
+          updates: [{
+            values: [
+              { path: 'environment.time.timezoneOffset', value: off },
+              { path: 'environment.time.timezoneRegion', value: zone }
+            ]
+          }]
+        })
+      }
+      publishClock()
+      clockTimer = setInterval(publishClock, 60000)
+    }
   }
 
   plugin.stop = function () {
     unsubscribes.forEach((f) => f())
     unsubscribes = []
     if (timer) clearInterval(timer)
+    if (clockTimer) clearInterval(clockTimer)
     timer = null
+    clockTimer = null
   }
 
   return plugin
 }
+
+module.exports.timezoneOffset = timezoneOffset

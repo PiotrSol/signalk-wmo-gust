@@ -209,6 +209,23 @@ describe('signalk-wmo-gust', () => {
     plugin.stop()
   })
 
+  it('converts time zones to the Signal K offset format', () => {
+    const d = new Date('2026-01-15T12:00:00Z')
+    assert.equal(createPlugin.timezoneOffset('Europe/Madrid', d), 100)
+    assert.equal(createPlugin.timezoneOffset('Europe/Madrid', new Date('2026-07-15T12:00:00Z')), 200)
+    assert.equal(createPlugin.timezoneOffset('Asia/Kolkata', d), 530)
+    assert.equal(createPlugin.timezoneOffset('America/St_Johns', d), -330)
+    assert.equal(createPlugin.timezoneOffset('UTC', d), 0)
+    assert.equal(createPlugin.timezoneOffset('Not/AZone', d), null)
+  })
+
+  it('publishes the onboard time zone', () => {
+    const { app, plugin } = run({ timezone: 'Europe/Madrid' })
+    assert.equal(app.published['environment.time.timezoneRegion'], 'Europe/Madrid')
+    assert.ok([100, 200].includes(app.published['environment.time.timezoneOffset']))
+    plugin.stop()
+  })
+
   it('declares units for every published path', () => {
     const { app, plugin } = run({})
     assert.equal(Object.keys(app.meta).length, 10)

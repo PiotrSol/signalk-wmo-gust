@@ -130,6 +130,7 @@ Then go to **Server → Plugin Config → WMO Wind**, and enable the plugin.
 | Anemometer distance below `design.airHeight` (m) | 0.3 | Allows for the sensor sitting below the top of the mast |
 | Wind profile exponent | 0.11 | 0.11 for open sea, 0.143 for open land, 0 for no correction |
 | Publish interval (s) | 1 | How often values are published |
+| Onboard time zone | empty | IANA name such as `Europe/Madrid`, published as `environment.time.timezoneOffset` and `timezoneRegion` so that displays running on UTC show local time. Empty: the server's time zone; `none`: not published |
 
 The height is re-read on every publish, so a change to `design.airHeight` takes effect without a restart.
 
