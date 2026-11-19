@@ -97,7 +97,7 @@ Touch or click a chart to read the values at that moment. Units are knots or m/s
 
 The app reads the **Signal K History API**, so a history provider must record this plugin's paths, for example **signalk-questdb**. It works without logging in, so it can run on Garmin chartplotters with OneHelm, for example through **signalk-garmin-onehelm**. It uses no external libraries or fonts, so it works offline.
 
-Points are averages (mean wind) and maxima (gusts, from the 1-minute paths) over 1 minute for 1 and 3 hours, 5 minutes for 24 hours and 15 minutes for 72 hours. Before version 0.4.0 the plugin didn't publish the absolute maximum; for that time the app takes it from the recorded wind samples, which a history provider may store at a lower rate, so it can read low.
+Points are averages (mean wind) and maxima over 1 minute for 1 and 3 hours, 5 minutes for 24 hours and 15 minutes for 72 hours. The WMO gust line is the 10-minute WMO gust, so it holds each gust for up to 10 minutes, as METAR reports do. The absolute maximum is the highest sample within each point, from `…Peak1min`. Before version 0.4.0 the plugin didn't publish it; for that time the app takes it from the recorded wind samples, which a history provider may store at a lower rate, so it can read low.
 
 ## Comparing with forecasts
 

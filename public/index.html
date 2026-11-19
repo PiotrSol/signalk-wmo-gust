@@ -190,11 +190,10 @@
     approxPeak = false
     points = rows.map(function (row) {
       var f = withNew && num(row[6]) ? row[6] : (lastF || liveFactor)
-      // Per-point maxima from the 1-minute paths; older history only has the 10-minute ones.
-      var mean = val(row[1]); var raw = val(row[3])
-      var gust1 = withNew ? val(row[7]) : null; var peak1 = withNew ? val(row[8]) : null
-      var gust = gust1 !== null ? gust1 : val(row[2])
-      var peak = peak1 !== null ? peak1 : (withNew ? val(row[5]) : null)
+      // WMO gust: the 10-minute WMO gust. Absolute max: the highest sample of each point,
+      // from the 1-minute peak, or from the stored raw samples before it was published.
+      var mean = val(row[1]); var raw = val(row[3]); var gust = val(row[2])
+      var peak = withNew ? val(row[8]) : null
       var p = { t: Date.parse(row[0]) + half, mean: mean, gust: gust, dir: val(row[4]), f: f }
       if (peak !== null) { p.peak = peak } else if (raw !== null) { p.peak = f ? raw * f : raw; approxPeak = true } else p.peak = null
       return p
