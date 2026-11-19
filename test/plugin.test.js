@@ -96,6 +96,20 @@ describe('signalk-wmo-gust', () => {
     plugin.stop()
   })
 
+  it('publishes the unaveraged 10-minute peak and the height factor', () => {
+    const { app, plugin } = run({ profileExponent: 0.11, sensorHeight: 20 })
+    feed(app, SOG, 120, (s) => (s >= 60 && s < 60.2 ? 20 : 5))
+    mock.timers.tick(1000)
+    const k = Math.pow(10 / 20, 0.11)
+    const p = app.published
+    assert.ok(Math.abs(p['environment.wind.heightFactorWMO'] - k) < 1e-9)
+    assert.ok(Math.abs(p['environment.wind.gustOverGroundPeak'] - 20 * k) < 1e-9)
+    // The 3 s running mean hides most of a 0.2 s spike; the peak does not.
+    assert.ok(p['environment.wind.gustOverGroundWMO'] < 7 * k)
+    assert.equal(app.meta['environment.wind.heightFactorWMO'].units, 'ratio')
+    plugin.stop()
+  })
+
   it('prefers a configured sensor height over design.airHeight', () => {
     const { app, plugin } = run({ profileExponent: 0.11, sensorHeight: 40 }, 20.3)
     feed(app, SOG, 60, () => 10)
@@ -119,6 +133,7 @@ describe('signalk-wmo-gust', () => {
     assert.ok('environment.wind.gustTrueWMO' in water.app.published)
     assert.ok('environment.wind.speedTrueMeanWMO' in water.app.published)
     assert.ok('environment.wind.gustTrueMax6hWMO' in water.app.published)
+    assert.ok('environment.wind.gustTruePeak' in water.app.published)
     assert.match(water.app.meta['environment.wind.gustTrueWMO'].description, /water reference/)
     water.plugin.stop()
   })
@@ -181,10 +196,11 @@ describe('signalk-wmo-gust', () => {
     plugin.stop()
   })
 
-  it('declares m/s units for every published path', () => {
+  it('declares units for every published path', () => {
     const { app, plugin } = run({})
-    assert.equal(Object.keys(app.meta).length, 6)
-    for (const [path, m] of Object.entries(app.meta)) assert.equal(m.units, path.includes('direction') ? 'rad' : 'm/s')
+    assert.equal(Object.keys(app.meta).length, 8)
+    const unit = (p) => (p.includes('direction') ? 'rad' : p.includes('Factor') ? 'ratio' : 'm/s')
+    for (const [path, m] of Object.entries(app.meta)) assert.equal(m.units, unit(path))
     plugin.stop()
   })
 })

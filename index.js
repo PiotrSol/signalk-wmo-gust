@@ -16,7 +16,10 @@
  * vector mean weighted by wind speed, so that 350° and 10° average to 0°.
  *
  * Speeds can be corrected from the anemometer height to the standard 10 m
- * with a power-law wind profile; directions are not height-corrected.
+ * with a power-law wind profile; directions are not height-corrected. The
+ * correction factor is published too, so that sensor-height values can be
+ * recovered, and so is the highest single sample of the last 10 minutes
+ * (the absolute peak, not a WMO gust).
  *
  * SPDX-License-Identifier: MIT
  */
@@ -33,6 +36,7 @@ const DEFAULT_EXPONENT = 0.11 // near-neutral open sea (Hsu et al., 1994)
 const CALM_MS = 0.5 // below this mean speed the direction is undefined
 const DIR_MAX_AGE_MS = 5000 // a direction older than this is not paired with a speed
 const TWO_PI = 2 * Math.PI
+const FACTOR_PATH = 'environment.wind.heightFactorWMO'
 
 module.exports = function (app) {
   const plugin = {
@@ -50,6 +54,7 @@ module.exports = function (app) {
    *   speedOverGround -> gustOverGroundWMO, speedOverGroundMeanWMO (ground)
    *   speedTrue       -> gustTrueWMO,       speedTrueMeanWMO       (water)
    *   anything else   -> <source>GustWMO,   <source>MeanWMO
+   * The absolute peak is <gust>Peak (gustOverGroundPeak, gustTruePeak).
    */
   function outputPaths (src) {
     let base, ref
@@ -63,7 +68,7 @@ module.exports = function (app) {
       base = { gust: `${src}Gust`, mean: `${src}Mean`, dir: `${src}DirectionMean` }
       ref = src
     }
-    const paths = { gust: `${base.gust}WMO`, mean: `${base.mean}WMO`, dir: `${base.dir}WMO`, ref, long: {} }
+    const paths = { gust: `${base.gust}WMO`, mean: `${base.mean}WMO`, dir: `${base.dir}WMO`, peak: `${base.gust}Peak`, factor: FACTOR_PATH, ref, long: {} }
     for (const h of LONG_WINDOWS_H) paths.long[h] = `${base.gust}Max${h}hWMO`
     return paths
   }
@@ -141,6 +146,8 @@ module.exports = function (app) {
     const meta = [
       { path: out.mean, description: `WMO mean wind (${out.ref}): 10 min average, ${correction}` },
       { path: out.gust, description: `WMO gust (${out.ref}): highest 3 s running mean in the last 10 min, ${correction}` },
+      { path: out.peak, description: `Highest single wind sample (${out.ref}) in the last 10 min, not averaged (not a WMO gust), ${correction}` },
+      { path: out.factor, units: 'ratio', description: 'Factor applied to correct wind speeds from the anemometer height to 10 m; divide a corrected value by it for the value at sensor height (1 = no correction)' },
       { path: out.dir, units: 'rad', description: `WMO mean wind direction (${out.ref}, true north, from): speed-weighted vector mean over 10 min; not published in a calm` },
       ...LONG_WINDOWS_H.map((h) => ({
         path: out.long[h],
@@ -207,9 +214,12 @@ module.exports = function (app) {
 
       const mean = k * samples.reduce((a, s) => a + s.v, 0) / samples.length
       const gust = k * gust3s.reduce((m, g) => Math.max(m, g.v), 0)
+      const peak = k * samples.reduce((m, s) => Math.max(m, s.v), 0)
       const values = [
         { path: out.mean, value: mean },
-        { path: out.gust, value: gust }
+        { path: out.gust, value: gust },
+        { path: out.peak, value: peak },
+        { path: out.factor, value: k }
       ]
       // Direction: the vector mean, undefined in a calm or without directions.
       let dirText = 'dir –'
@@ -239,7 +249,7 @@ module.exports = function (app) {
       const filling = spanS < WINDOW_MS / 1000 - 10 ? ` (10 min window filling: ${Math.round(spanS)} s)` : ''
       const warn = rateHz < 4 ? ' — WARNING: input below 4 Hz' : ''
       app.setPluginStatus(
-        `Mean ${(mean * MS_TO_KN).toFixed(1)} kn ${dirText}, gust ${(gust * MS_TO_KN).toFixed(1)} kn, max ${longText.join(' / ')} kn; ` +
+        `Mean ${(mean * MS_TO_KN).toFixed(1)} kn ${dirText}, gust ${(gust * MS_TO_KN).toFixed(1)} kn, peak ${(peak * MS_TO_KN).toFixed(1)} kn, max ${longText.join(' / ')} kn; ` +
         `${rateHz.toFixed(1)} Hz, sensor ${height.h.toFixed(1)} m (${height.src})${filling}${warn}`
       )
     }, (options.publishInterval > 0 ? options.publishInterval : 1) * 1000)

@@ -16,8 +16,10 @@ With the default source `environment.wind.speedOverGround`:
 | `environment.wind.gustOverGroundMax1hWMO` | Highest WMO gust in the last hour | ECMWF `10fg1`; SYNOP hourly gust |
 | `environment.wind.gustOverGroundMax3hWMO` | Highest WMO gust in the last 3 hours | ECMWF `10fg3`; GFS `GUST` at 3-hourly output |
 | `environment.wind.gustOverGroundMax6hWMO` | Highest WMO gust in the last 6 hours | ECMWF `10fg6` |
+| `environment.wind.gustOverGroundPeak` | Highest single sample in the last 10 minutes, not averaged | Instrument displays' "max wind" |
+| `environment.wind.heightFactorWMO` | Factor applied to correct speeds to 10 m; divide by it for sensor-height values | — |
 
-All values are in m/s, the Signal K base unit, with metadata describing the reference and the height correction applied. The names follow the source path: `environment.wind.speedTrue` (water-referenced) gives `speedTrueMeanWMO`, `gustTrueWMO`, `gustTrueMax1hWMO` and so on.
+Speeds are in m/s, the Signal K base unit, with metadata describing the reference and the height correction applied. The names follow the source path: `environment.wind.speedTrue` (water-referenced) gives `speedTrueMeanWMO`, `gustTrueWMO`, `gustTrueMax1hWMO` and so on.
 
 The plugin status line shows the current values in knots, the actual input rate, and where the sensor height came from.
 
@@ -80,6 +82,20 @@ In a current the two differ by roughly the current's speed. In 2 kn of tide, the
 **6. Instrument damping and sampling rate.** Many wind transducers and displays apply damping, a smoothing filter, to the data they send. Heavy damping lowers gusts below their true value. Check the damping setting of your wind sensor or its NMEA 2000 gateway; the lowest setting, or none, is best for this plugin. The WMO method also needs at least 4 Hz input. NMEA 2000 wind data (PGN 130306) typically arrives at 10 Hz. The plugin shows the actual rate on its status line and warns below 4 Hz.
 
 **7. Sheltering.** In a marina or close to a high shore, buildings, other masts and terrain shelter the sensor. Neither forecasts nor height correction can account for that. Use data from open water or an exposed anchorage when judging a forecast.
+
+## Wind history web app
+
+The plugin includes a web app, **WMO Wind**, under **Web Apps** in the Signal K admin, at `/signalk-wmo-gust/`. It charts the last **3, 24 or 72 hours**:
+
+- the 10-minute **mean wind at 10 m** and **at sensor height**;
+- **gusts**: the WMO 3-second gust, the absolute maximum (highest single sample), or both, at 10 m or at sensor height;
+- the 10-minute **mean direction**.
+
+Touch or click a chart to read the values at that moment. Units are knots or m/s, and a night mode keeps the screen dark.
+
+The app reads the **Signal K History API**, so a history provider must record this plugin's paths, for example **signalk-questdb**. It works without logging in, so it can run on Garmin chartplotters with OneHelm, for example through **signalk-garmin-onehelm**. It uses no external libraries or fonts, so it works offline.
+
+Points are averages (mean wind) and maxima (gusts) over 1 minute for 3 hours, 5 minutes for 24 hours and 15 minutes for 72 hours. Before version 0.4.0 the plugin didn't publish the absolute maximum; for that time the app takes it from the recorded wind samples, which a history provider may store at a lower rate, so it can read low.
 
 ## Comparing with forecasts
 

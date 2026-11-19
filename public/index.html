@@ -1,0 +1,539 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wind history</title>
+<style>
+  /* Plain CSS and ES2015 only: the chartplotter's built-in browser may be old. */
+  :root {
+    --bg: #e9eef1; --panel: #ffffff; --ink: #0f2230; --muted: #5a6a76; --rule: #cfd8de;
+    --mean: #1c4e8a; --means: #6f97c9; --gust: #c4471a; --peak: #7b2d86; --dir: #0e6f69;
+    --btn: #dde5ea; --btn-on: #0f2230; --btn-on-ink: #ffffff;
+  }
+  body.night {
+    --bg: #000000; --panel: #0a0000; --ink: #ff4d3d; --muted: #a33326; --rule: #3a0d08;
+    --mean: #ff3b2f; --means: #b3261b; --gust: #ff8c42; --peak: #ffc09a; --dir: #e0473a;
+    --btn: #1a0402; --btn-on: #ff3b2f; --btn-on-ink: #000000;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: Roboto, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    font-variant-numeric: tabular-nums;
+    display: flex; flex-direction: column; overflow: hidden;
+    -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent;
+  }
+  header { display: flex; flex-wrap: wrap; align-items: stretch; padding: 8px 12px 0; }
+  .now { background: var(--panel); border-radius: 6px; padding: 6px 12px 8px; margin: 0 8px 8px 0; min-width: 118px; }
+  .now .label { font-size: 14px; color: var(--muted); }
+  .now .value { font-size: 34px; font-weight: 500; line-height: 1.1; white-space: nowrap; }
+  .now .value small { font-size: 15px; font-weight: 400; color: var(--muted); margin-left: 3px; }
+  .now.mean .value { color: var(--mean); }
+  .now.means .value { color: var(--means); }
+  .now.gust .value { color: var(--gust); }
+  .now.peak .value { color: var(--peak); }
+  .now.dir .value { color: var(--dir); }
+  nav { display: flex; flex-wrap: wrap; align-items: center; padding: 0 12px; }
+  .group { display: flex; align-items: center; margin: 0 16px 8px 0; }
+  .group span { font-size: 14px; color: var(--muted); margin-right: 8px; }
+  button {
+    font: inherit; font-size: 17px; min-height: 44px; min-width: 56px; padding: 0 14px;
+    border: 0; background: var(--btn); color: var(--ink); cursor: pointer;
+  }
+  .seg button { border-radius: 0; margin-right: 1px; }
+  .seg button:first-of-type { border-radius: 6px 0 0 6px; }
+  .seg button:last-of-type { border-radius: 0 6px 6px 0; margin-right: 0; }
+  button.on { background: var(--btn-on); color: var(--btn-on-ink); }
+  button:focus-visible { outline: 3px solid var(--gust); outline-offset: 2px; }
+  #night { border-radius: 6px; }
+  main { flex: 1; display: flex; flex-direction: column; min-height: 0; margin: 0 12px; background: var(--panel); border-radius: 6px; position: relative; }
+  .plot { position: relative; min-height: 0; }
+  #speedWrap { flex: 1; }
+  #dirWrap { height: 24%; min-height: 70px; border-top: 1px solid var(--rule); }
+  canvas { position: absolute; left: 0; top: 0; width: 100%; height: 100%; touch-action: none; }
+  #legend { position: absolute; right: 14px; top: 8px; font-size: 14px; color: var(--muted); text-align: right; pointer-events: none; background: var(--panel); padding: 2px 6px; border-radius: 4px; opacity: 0.92; }
+  #legend i { display: inline-block; width: 22px; height: 0; border-top: 3px solid; vertical-align: middle; margin: 0 5px 0 12px; }
+  #readout {
+    position: absolute; top: 8px; display: none; background: var(--panel); border: 1px solid var(--rule);
+    border-radius: 6px; padding: 6px 10px; font-size: 15px; line-height: 1.45; pointer-events: none; white-space: nowrap;
+  }
+  #readout b { font-weight: 500; }
+  #message { position: absolute; left: 0; right: 0; top: 40%; text-align: center; padding: 0 24px; font-size: 18px; color: var(--muted); }
+  footer { padding: 8px 12px 10px; font-size: 15px; color: var(--muted); min-height: 36px; }
+  footer b { color: var(--ink); font-weight: 500; }
+  @media (max-width: 760px), (max-height: 560px) {
+    header { flex-wrap: nowrap; padding: 6px 8px 0; }
+    .now { flex: 1 1 0; min-width: 0; padding: 3px 6px 4px; margin: 0 4px 6px 0; }
+    .now .label { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .now .value { font-size: 21px; }
+    .now .value small { font-size: 12px; }
+    nav { padding: 0 8px; }
+    .group { margin: 0 8px 6px 0; }
+    .group span { font-size: 12px; margin-right: 4px; }
+    button { font-size: 14px; min-height: 40px; min-width: 40px; padding: 0 8px; }
+    main { margin: 0 8px; }
+    #legend, #readout { font-size: 12px; }
+    footer { font-size: 13px; padding: 4px 8px 6px; min-height: 0; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="now mean"><div class="label">Mean at 10 m</div><div class="value" id="nMean">–</div></div>
+  <div class="now means"><div class="label">Mean at sensor</div><div class="value" id="nMeanS">–</div></div>
+  <div class="now gust"><div class="label" id="nGustLabel">WMO gust</div><div class="value" id="nGust">–</div></div>
+  <div class="now peak"><div class="label" id="nPeakLabel">Peak, 10 min</div><div class="value" id="nPeak">–</div></div>
+  <div class="now dir"><div class="label">From</div><div class="value" id="nDir">–</div></div>
+</header>
+<nav>
+  <div class="group seg" data-key="range"><span>Period</span>
+    <button data-v="3">3 h</button><button data-v="24">24 h</button><button data-v="72">72 h</button></div>
+  <div class="group seg" data-key="gust"><span>Gusts</span>
+    <button data-v="wmo">WMO 3 s</button><button data-v="peak">Absolute max</button><button data-v="both">Both</button></div>
+  <div class="group seg" data-key="gustH"><span>Gusts at</span>
+    <button data-v="10">10 m</button><button data-v="sensor">Sensor</button></div>
+  <div class="group seg" data-key="unit"><span>Units</span>
+    <button data-v="kn">kn</button><button data-v="ms">m/s</button></div>
+  <div class="group"><button id="night">Night</button></div>
+</nav>
+<main>
+  <div class="plot" id="speedWrap"><canvas id="speed"></canvas><div id="legend"></div><div id="readout"></div><div id="message">Loading wind history…</div></div>
+  <div class="plot" id="dirWrap"><canvas id="dir"></canvas></div>
+</main>
+<footer id="summary"></footer>
+<script>
+'use strict'
+;(function () {
+  var RANGES = {
+    3: { duration: 'PT3H', res: 60, tick: 30 * 60000 },
+    24: { duration: 'PT24H', res: 300, tick: 3 * 3600000 },
+    72: { duration: 'PT72H', res: 900, tick: 12 * 3600000 }
+  }
+  var MS_TO_KN = 1.94384
+  var FAMILIES = {
+    ground: {
+      mean: 'environment.wind.speedOverGroundMeanWMO', gust: 'environment.wind.gustOverGroundWMO',
+      peak: 'environment.wind.gustOverGroundPeak', raw: 'environment.wind.speedOverGround',
+      dir: 'environment.wind.directionOverGroundMeanWMO'
+    },
+    water: {
+      mean: 'environment.wind.speedTrueMeanWMO', gust: 'environment.wind.gustTrueWMO',
+      peak: 'environment.wind.gustTruePeak', raw: 'environment.wind.speedTrue',
+      dir: 'environment.wind.directionTrueMeanWMO'
+    }
+  }
+  var FACTOR = 'environment.wind.heightFactorWMO'
+  var COMPASS = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW']
+
+  var state = { range: '3', gust: 'wmo', gustH: '10', unit: 'kn', night: false }
+  try { var saved = JSON.parse(localStorage.getItem('wmo-wind-app') || '{}'); for (var k in saved) if (k in state) state[k] = saved[k] } catch (e) { /* no storage */ }
+  function save () { try { localStorage.setItem('wmo-wind-app', JSON.stringify(state)) } catch (e) { /* no storage */ } }
+
+  var family = FAMILIES.ground
+  var liveFactor = null
+  var points = []
+  var approxPeak = false
+  var selected = -1
+  var selectTimer = null
+  var historyTimer = null
+  var live = {}
+  var $ = function (id) { return document.getElementById(id) }
+
+  // ---- data ---------------------------------------------------------------
+
+  function getJSON (url, cb) {
+    var x = new XMLHttpRequest()
+    x.open('GET', url)
+    x.timeout = 20000
+    x.onload = function () {
+      if (x.status !== 200) return cb(new Error('HTTP ' + x.status))
+      try { cb(null, JSON.parse(x.responseText)) } catch (e) { cb(e) }
+    }
+    x.onerror = function () { cb(new Error('no connection to Signal K')) }
+    x.ontimeout = function () { cb(new Error('Signal K did not answer')) }
+    x.send()
+  }
+
+  function historyUrl (r, withNew) {
+    var p = [family.mean + ':average', family.gust + ':max', family.raw + ':max', family.dir + ':last']
+    if (withNew) p.push(family.peak + ':max', FACTOR + ':average')
+    return '/signalk/v2/api/history/values?paths=' + p.join(',') + '&duration=' + r.duration + '&resolution=' + r.res
+  }
+
+  function loadHistory () {
+    clearTimeout(historyTimer)
+    var key = state.range
+    var r = RANGES[key]
+    getJSON(historyUrl(r, true), function (err, d) {
+      if (!err) return gotHistory(key, r, d, true)
+      // Paths added in 0.4.0 may not be in the history yet.
+      getJSON(historyUrl(r, false), function (err2, d2) {
+        if (err2) return showMessage('Can’t load the wind history (' + err2.message + '). Check that the WMO Wind plugin and history recording (signalk-questdb) are running.')
+        gotHistory(key, r, d2, false)
+      })
+    })
+    historyTimer = setTimeout(loadHistory, key === '3' ? 60000 : 180000)
+  }
+
+  function gotHistory (key, r, d, withNew) {
+    if (key !== state.range) return
+    var rows = (d && d.data) || []
+    var half = r.res * 500
+    var lastF = null
+    for (var i = rows.length - 1; i >= 0 && lastF === null; i--) if (withNew && num(rows[i][6])) lastF = rows[i][6]
+    approxPeak = false
+    points = rows.map(function (row) {
+      var f = withNew && num(row[6]) ? row[6] : (lastF || liveFactor)
+      var mean = val(row[1]); var gust = val(row[2]); var raw = val(row[3])
+      var peak = withNew ? val(row[5]) : null
+      var p = { t: Date.parse(row[0]) + half, mean: mean, gust: gust, dir: val(row[4]), f: f }
+      if (peak !== null) { p.peak = peak } else if (raw !== null) { p.peak = f ? raw * f : raw; approxPeak = true } else p.peak = null
+      return p
+    })
+    if (!points.some(function (p) { return p.mean !== null })) {
+      points = []
+      return showMessage('No wind data recorded in the last ' + key + ' h.')
+    }
+    showMessage('')
+    draw()
+  }
+
+  function num (v) { return typeof v === 'number' && isFinite(v) }
+  function val (v) { return num(v) ? v : null }
+
+  function pick (obj, path) {
+    var name = path.split('.').pop()
+    return obj && obj[name] && num(obj[name].value) ? obj[name].value : null
+  }
+
+  function loadLive () {
+    getJSON('/signalk/v1/api/vessels/self/environment/wind', function (err, w) {
+      setTimeout(loadLive, 3000)
+      if (err) return
+      if (pick(w, FAMILIES.ground.mean) === null && pick(w, FAMILIES.water.mean) !== null && family !== FAMILIES.water) {
+        family = FAMILIES.water
+        loadHistory()
+      }
+      var f = pick(w, FACTOR)
+      if (f && !liveFactor) { liveFactor = f; if (points.length) draw() } else if (f) liveFactor = f
+      live = { mean: pick(w, family.mean), gust: pick(w, family.gust), peak: pick(w, family.peak), dir: pick(w, family.dir) }
+      showLive()
+    })
+  }
+
+  function showLive () {
+    var mean = live.mean; var gust = live.gust; var peak = live.peak; var dir = live.dir
+    if (mean === undefined) return
+    var s = state.gustH === 'sensor' && liveFactor ? 1 / liveFactor : 1
+    $('nMean').innerHTML = fmt(mean, true)
+    $('nMeanS').innerHTML = liveFactor ? fmt(mean === null ? null : mean / liveFactor, true) : '–'
+    $('nGust').innerHTML = fmt(gust === null ? null : gust * s, true)
+    $('nPeak').innerHTML = fmt(peak === null ? null : peak * s, true)
+    $('nDir').innerHTML = dir === null ? '–' : pad3(deg(dir)) + '°<small>' + compass(dir) + '</small>'
+  }
+
+  // ---- formatting ---------------------------------------------------------
+
+  function conv (ms) { return state.unit === 'kn' ? ms * MS_TO_KN : ms }
+  function unitName () { return state.unit === 'kn' ? 'kn' : 'm/s' }
+  function fmt (ms, withUnit) {
+    if (ms === null || ms === undefined) return '–'
+    return conv(ms).toFixed(1) + (withUnit ? '<small>' + unitName() + '</small>' : '')
+  }
+  function deg (rad) { return Math.round(rad * 180 / Math.PI + 360) % 360 }
+  function pad3 (n) { return ('00' + n).slice(-3) }
+  function compass (rad) { return COMPASS[Math.round(deg(rad) / 22.5) % 16] }
+  function two (n) { return (n < 10 ? '0' : '') + n }
+  function hm (t) { var d = new Date(t); return two(d.getHours()) + ':' + two(d.getMinutes()) }
+  function dm (t) { var d = new Date(t); return two(d.getDate()) + '/' + two(d.getMonth() + 1) }
+
+  // ---- series -------------------------------------------------------------
+
+  function series () {
+    var sensorGust = state.gustH === 'sensor'
+    var g = function (key) {
+      return function (p) {
+        var v = p[key]
+        if (v === null) return null
+        var f = p.f || liveFactor
+        return sensorGust ? (f ? v / f : null) : v
+      }
+    }
+    var gustMean = sensorGust ? 'meanS' : 'mean'
+    var list = [
+      { id: 'mean', name: 'Mean at 10 m', color: 'mean', width: 2.5, get: function (p) { return p.mean } },
+      { id: 'meanS', name: 'Mean at sensor', color: 'means', width: 2, dash: [7, 5], get: function (p) { var f = p.f || liveFactor; return p.mean !== null && f ? p.mean / f : null } }
+    ]
+    var h = sensorGust ? ' at sensor' : ' at 10 m'
+    if (state.gust !== 'peak') list.push({ id: 'gust', name: 'WMO gust' + h, color: 'gust', width: 2, fill: gustMean, get: g('gust') })
+    if (state.gust !== 'wmo') {
+      list.push({
+        id: 'peak', name: 'Absolute max' + h, color: 'peak', width: state.gust === 'both' ? 1.5 : 2,
+        dash: state.gust === 'both' ? [2, 3] : null, fill: state.gust === 'peak' ? gustMean : null, get: g('peak')
+      })
+    }
+    return list
+  }
+
+  // ---- drawing ------------------------------------------------------------
+
+  function css (name) { return getComputedStyle(document.body).getPropertyValue('--' + name).trim() }
+
+  function setup (canvas) {
+    var dpr = window.devicePixelRatio || 1
+    var w = canvas.parentNode.clientWidth; var h = canvas.parentNode.clientHeight
+    canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr)
+    var c = canvas.getContext('2d')
+    c.setTransform(dpr, 0, 0, dpr, 0, 0)
+    c.clearRect(0, 0, w, h)
+    return { c: c, w: w, h: h }
+  }
+
+  function niceStep (span, target) {
+    var raw = span / target
+    var p = Math.pow(10, Math.floor(Math.log(raw) / Math.LN10))
+    var m = raw / p
+    return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 2.5 ? 2.5 : m <= 5 ? 5 : 10) * p
+  }
+
+  var PAD = { l: 46, r: 14, t: 12, b: 28 }
+  var geo = null
+
+  function draw () {
+    var r = RANGES[state.range]
+    var end = Date.now()
+    var start = end - Number(state.range) * 3600000
+    var list = series()
+    var ink = css('ink'); var muted = css('muted'); var rule = css('rule')
+
+    // Speed chart
+    var S = setup($('speed'))
+    var c = S.c
+    var max = 0
+    points.forEach(function (p) { list.forEach(function (s) { var v = s.get(p); if (v !== null && v > max) max = v }) })
+    var top = Math.max(conv(max) * 1.08, state.unit === 'kn' ? 10 : 5)
+    var step = niceStep(top, Math.max(3, Math.floor((S.h - PAD.t - PAD.b) / 55)))
+    top = Math.ceil(top / step) * step
+    var x0 = PAD.l; var x1 = S.w - PAD.r; var y0 = S.h - PAD.b; var y1 = PAD.t
+    var X = function (t) { return x0 + (t - start) / (end - start) * (x1 - x0) }
+    var Y = function (ms) { return y0 - conv(ms) / top * (y0 - y1) }
+    geo = { start: start, end: end, x0: x0, x1: x1, X: X }
+
+    c.font = '13px Roboto, Arial, sans-serif'
+    c.lineWidth = 1
+    c.fillStyle = muted
+    c.textAlign = 'right'; c.textBaseline = 'middle'
+    for (var v = 0; v <= top + 1e-9; v += step) {
+      var y = Math.round(y0 - v / top * (y0 - y1)) + 0.5
+      c.strokeStyle = rule; c.beginPath(); c.moveTo(x0, y); c.lineTo(x1, y); c.stroke()
+      c.fillText(String(Math.round(v * 10) / 10), x0 - 6, y)
+    }
+    c.textAlign = 'left'; c.textBaseline = 'top'
+    c.fillText(unitName(), 4, 2)
+    timeAxis(c, r, start, end, X, y1, y0, rule, muted, true)
+
+    var gap = r.res * 1000 * 2.5
+    list.forEach(function (s) {
+      if (!s.fill) return
+      var base = s.fill === 'mean' ? list[0] : list[1]
+      fillBetween(c, s, base, X, Y, gap, css(s.color))
+    })
+    for (var i = list.length - 1; i >= 0; i--) line(c, list[i], X, Y, gap)
+
+    // Direction strip
+    var D = setup($('dir'))
+    var d = D.c
+    var dy0 = D.h - 8; var dy1 = 8
+    var DY = function (rad) { return dy0 - (deg(rad) / 360) * (dy0 - dy1) }
+    d.font = '13px Roboto, Arial, sans-serif'
+    d.fillStyle = muted; d.textAlign = 'right'; d.textBaseline = 'middle'
+    ;[[0, 'N'], [90, 'E'], [180, 'S'], [270, 'W'], [360, 'N']].forEach(function (a) {
+      var y = Math.round(dy0 - a[0] / 360 * (dy0 - dy1)) + 0.5
+      d.strokeStyle = rule; d.lineWidth = 1; d.beginPath(); d.moveTo(x0, y); d.lineTo(x1, y); d.stroke()
+      if (D.h > 90 || a[0] % 180 === 0) d.fillText(a[1], x0 - 6, y)
+    })
+    timeAxis(d, r, start, end, X, dy1, dy0, rule, muted, false)
+    d.fillStyle = css('dir')
+    points.forEach(function (p) {
+      if (p.dir === null || p.t < start) return
+      d.beginPath(); d.arc(X(p.t), DY(p.dir), 2.4, 0, 2 * Math.PI); d.fill()
+    })
+
+    if (selected >= 0 && points[selected]) cross(c, d, list, X, Y, DY, S, D, ink)
+    legend(list)
+    summary(list)
+  }
+
+  function timeAxis (c, r, start, end, X, yTop, yBottom, rule, muted, labels) {
+    var off = -new Date(start).getTimezoneOffset() * 60000
+    var t = Math.ceil((start + off) / r.tick) * r.tick - off
+    c.textAlign = 'center'; c.textBaseline = 'top'
+    for (; t <= end; t += r.tick) {
+      var x = Math.round(X(t)) + 0.5
+      var midnight = ((t + off) % 86400000) === 0
+      c.strokeStyle = rule; c.lineWidth = midnight ? 2 : 1
+      c.beginPath(); c.moveTo(x, yTop); c.lineTo(x, yBottom); c.stroke()
+      if (labels) { c.fillStyle = muted; c.fillText(midnight && r.tick >= 3600000 ? dm(t) : hm(t), x, yBottom + 7) }
+    }
+  }
+
+  function line (c, s, X, Y, gap) {
+    c.strokeStyle = css(s.color); c.lineWidth = s.width
+    c.lineJoin = 'round'; c.lineCap = 'round'
+    if (c.setLineDash) c.setLineDash(s.dash || [])
+    c.beginPath()
+    var prev = null
+    points.forEach(function (p) {
+      var v = s.get(p)
+      if (v === null) { prev = null; return }
+      if (prev === null || p.t - prev > gap) c.moveTo(X(p.t), Y(v)); else c.lineTo(X(p.t), Y(v))
+      prev = p.t
+    })
+    c.stroke()
+    if (c.setLineDash) c.setLineDash([])
+  }
+
+  function fillBetween (c, s, base, X, Y, gap, color) {
+    c.fillStyle = color
+    c.globalAlpha = 0.14
+    var run = []
+    var flush = function () {
+      if (run.length > 1) {
+        c.beginPath()
+        run.forEach(function (q, i) { if (i) c.lineTo(X(q.t), Y(q.hi)); else c.moveTo(X(q.t), Y(q.hi)) })
+        for (var i = run.length - 1; i >= 0; i--) c.lineTo(X(run[i].t), Y(run[i].lo))
+        c.closePath(); c.fill()
+      }
+      run = []
+    }
+    points.forEach(function (p) {
+      var hi = s.get(p); var lo = base.get(p)
+      if (hi === null || lo === null || (run.length && p.t - run[run.length - 1].t > gap)) flush()
+      if (hi !== null && lo !== null) run.push({ t: p.t, hi: hi, lo: lo })
+    })
+    flush()
+    c.globalAlpha = 1
+  }
+
+  function cross (c, d, list, X, Y, DY, S, D, ink) {
+    var p = points[selected]
+    var x = Math.round(X(p.t)) + 0.5
+    ;[[c, S.h], [d, D.h]].forEach(function (a) {
+      a[0].strokeStyle = ink; a[0].lineWidth = 1
+      a[0].beginPath(); a[0].moveTo(x, 0); a[0].lineTo(x, a[1]); a[0].stroke()
+    })
+    var rows = ['<b>' + (state.range === '72' ? dm(p.t) + ' ' : '') + hm(p.t) + '</b>']
+    list.forEach(function (s) {
+      var v = s.get(p)
+      if (v === null) return
+      c.fillStyle = css(s.color)
+      c.beginPath(); c.arc(x, Y(v), 4, 0, 2 * Math.PI); c.fill()
+      rows.push(s.name + ' <b style="color:' + css(s.color) + '">' + fmt(v) + '</b> ' + unitName())
+    })
+    if (p.dir !== null) {
+      d.fillStyle = ink; d.beginPath(); d.arc(x, DY(p.dir), 4, 0, 2 * Math.PI); d.fill()
+      rows.push('From <b>' + pad3(deg(p.dir)) + '° ' + compass(p.dir) + '</b>')
+    }
+    var el = $('readout')
+    el.innerHTML = rows.join('<br>')
+    el.style.display = 'block'
+    var w = el.offsetWidth
+    var left = x + 14 + w > S.w - 8 ? x - 14 - w : x + 14
+    el.style.left = Math.max(4, left) + 'px'
+  }
+
+  function legend (list) {
+    $('legend').innerHTML = list.map(function (s) {
+      var style = s.dash ? (s.dash[0] < 4 ? 'dotted' : 'dashed') : 'solid'
+      return '<i style="border-top-color:' + css(s.color) + ';border-top-style:' + style + '"></i>' + s.name
+    }).join('<br>')
+  }
+
+  function summary (list) {
+    var start = Date.now() - Number(state.range) * 3600000
+    var inRange = points.filter(function (p) { return p.t >= start })
+    var parts = []
+    list.slice(2).forEach(function (s) {
+      var best = null
+      inRange.forEach(function (p) { var v = s.get(p); if (v !== null && (!best || v > best.v)) best = { v: v, t: p.t } })
+      if (best) parts.push('Highest ' + s.name.replace('Absolute', 'absolute') + ' <b>' + fmt(best.v) + ' ' + unitName() + '</b> at ' + (state.range === '72' ? dm(best.t) + ' ' : '') + hm(best.t) + '.')
+    })
+    var sum = 0; var n = 0
+    inRange.forEach(function (p) { if (p.mean !== null) { sum += p.mean; n++ } })
+    if (n) parts.push('Average wind at 10 m <b>' + fmt(sum / n) + ' ' + unitName() + '</b>.')
+    if (approxPeak && state.gust !== 'wmo') parts.push('Absolute max before the plugin recorded it is taken from the stored samples and may read low.')
+    $('summary').innerHTML = parts.join(' ')
+  }
+
+  function showMessage (text) {
+    $('message').textContent = text
+    $('message').style.display = text ? 'block' : 'none'
+    if (text) { $('summary').innerHTML = ''; $('legend').innerHTML = '' }
+  }
+
+  // ---- interaction --------------------------------------------------------
+
+  function selectAt (clientX) {
+    if (!geo || !points.length) return
+    var rect = $('speed').getBoundingClientRect()
+    var x = clientX - rect.left
+    if (x < geo.x0 - 10 || x > geo.x1 + 10) return clear()
+    var t = geo.start + (x - geo.x0) / (geo.x1 - geo.x0) * (geo.end - geo.start)
+    var best = -1; var bd = Infinity
+    points.forEach(function (p, i) { var dd = Math.abs(p.t - t); if (dd < bd) { bd = dd; best = i } })
+    selected = best
+    clearTimeout(selectTimer)
+    selectTimer = setTimeout(clear, 10000)
+    draw()
+  }
+  function clear () { selected = -1; $('readout').style.display = 'none'; draw() }
+
+  ;['speed', 'dir'].forEach(function (id) {
+    var el = $(id)
+    el.addEventListener('touchstart', function (e) { e.preventDefault(); selectAt(e.touches[0].clientX) }, { passive: false })
+    el.addEventListener('touchmove', function (e) { e.preventDefault(); selectAt(e.touches[0].clientX) }, { passive: false })
+    el.addEventListener('mousedown', function (e) { selectAt(e.clientX) })
+    el.addEventListener('mousemove', function (e) { if (e.buttons) selectAt(e.clientX) })
+  })
+
+  function syncButtons () {
+    var groups = document.querySelectorAll('.seg')
+    for (var i = 0; i < groups.length; i++) {
+      var key = groups[i].getAttribute('data-key')
+      var bs = groups[i].querySelectorAll('button')
+      for (var j = 0; j < bs.length; j++) bs[j].className = bs[j].getAttribute('data-v') === state[key] ? 'on' : ''
+    }
+    $('night').className = state.night ? 'on' : ''
+    document.body.className = state.night ? 'night' : ''
+    $('nGustLabel').textContent = 'WMO gust' + (state.gustH === 'sensor' ? ', sensor' : ', 10 m')
+    $('nPeakLabel').textContent = 'Peak, 10 min' + (state.gustH === 'sensor' ? ', sensor' : '')
+    showLive()
+  }
+
+  document.querySelector('nav').addEventListener('click', function (e) {
+    var b = e.target
+    if (b.tagName !== 'BUTTON') return
+    if (b.id === 'night') state.night = !state.night
+    else {
+      var key = b.parentNode.getAttribute('data-key')
+      var changed = state[key] !== b.getAttribute('data-v')
+      state[key] = b.getAttribute('data-v')
+      if (key === 'range' && changed) { points = []; selected = -1; $('readout').style.display = 'none'; showMessage('Loading wind history…'); draw(); loadHistory() }
+    }
+    save(); syncButtons(); draw()
+  })
+
+  var resizeTimer = null
+  window.addEventListener('resize', function () { clearTimeout(resizeTimer); resizeTimer = setTimeout(draw, 150) })
+  setInterval(function () { if (selected < 0) draw() }, 30000)
+
+  syncButtons()
+  draw()
+  loadLive()
+  loadHistory()
+})()
+</script>
+</body>
+</html>
