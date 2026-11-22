@@ -35,6 +35,9 @@
   .now.gust .value { color: var(--gust); }
   .now.peak .value { color: var(--peak); }
   .now.dir .value { color: var(--dir); }
+  .now .since { font-size: 0.8125rem; color: var(--muted); white-space: nowrap; margin-top: 0.125rem; }
+  .now .since b { font-weight: 500; color: var(--ink); }
+  .now .since .ago-s { display: none; }
   nav { display: flex; flex-wrap: wrap; align-items: center; padding: 0 0.75rem; }
   .group { display: flex; align-items: center; margin: 0 1rem 0.5rem 0; }
   .group span { font-size: 0.875rem; color: var(--muted); margin-right: 0.5rem; }
@@ -70,6 +73,10 @@
     .now .label { font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .now .value { font-size: 1.3125rem; }
     .now .value small { font-size: 0.75rem; }
+    .now .since { font-size: 0.6875rem; overflow: hidden; text-overflow: ellipsis; }
+    .now .since .per, .now .since .dot { display: none; }
+    .now .since .ago { display: none; }
+    .now .since .ago-s { display: block; white-space: normal; }
     nav { padding: 0 0.5rem; }
     .group { margin: 0 0.5rem 0.375rem 0; }
     .group span { font-size: 0.75rem; margin-right: 0.25rem; }
@@ -84,8 +91,8 @@
 <header>
   <div class="now mean"><div class="label">Mean at 10 m</div><div class="value" id="nMean">–</div></div>
   <div class="now means"><div class="label">Mean at sensor</div><div class="value" id="nMeanS">–</div></div>
-  <div class="now gust"><div class="label" id="nGustLabel">WMO gust</div><div class="value" id="nGust">–</div></div>
-  <div class="now peak"><div class="label" id="nPeakLabel">Peak, 10 min</div><div class="value" id="nPeak">–</div></div>
+  <div class="now gust"><div class="label" id="nGustLabel">WMO gust</div><div class="value" id="nGust">–</div><div class="since" id="nGustMax"></div></div>
+  <div class="now peak"><div class="label" id="nPeakLabel">Peak, 10 min</div><div class="value" id="nPeak">–</div><div class="since" id="nPeakMax"></div></div>
   <div class="now dir"><div class="label">From</div><div class="value" id="nDir">–</div></div>
 </header>
 <nav>
@@ -239,6 +246,42 @@
     $('nGust').innerHTML = fmt(gust === null ? null : gust * s, true)
     $('nPeak').innerHTML = fmt(peak === null ? null : peak * s, true)
     $('nDir').innerHTML = dir === null ? '–' : pad3(deg(dir)) + '°<small>' + compass(dir) + '</small>' + arrowSvg(dir)
+    showMaxima()
+  }
+
+  // Under the gust and peak tiles: the highest value of the chart period and how long ago
+  // it was; older than 24 h, the date and time instead. A point's time is the middle of its
+  // history bucket (1 min for 1 and 3 h, 5 min for 24 h, 15 min for 72 h).
+  function showMaxima () {
+    var start = Date.now() - Number(state.range) * 3600000
+    var s = state.gustH === 'sensor'
+    if (!points.length) { $('nGustMax').innerHTML = ''; $('nPeakMax').innerHTML = ''; return }
+    ;[['gust', 'nGustMax'], ['peak', 'nPeakMax']].forEach(function (k) {
+      var best = null
+      points.forEach(function (p) {
+        if (p.t < start || p[k[0]] === null) return
+        var f = p.f || liveFactor
+        var v = s ? (f ? p[k[0]] / f : null) : p[k[0]]
+        if (v !== null && (!best || v > best.v)) best = { v: v, t: p.t }
+      })
+      // The live 10-minute value can be newer than the last history point.
+      var lv = live[k[0]]
+      if (num(lv)) {
+        if (s) lv = liveFactor ? lv / liveFactor : null
+        if (lv !== null && (!best || lv > best.v)) best = { v: lv, t: null }
+      }
+      $(k[1]).innerHTML = best ? '<span class="per">' + state.range + ' h </span>max <b>' + fmt(best.v) + '</b><span class="dot"> · </span><span class="ago">' + since(best.t) + '</span><span class="ago-s">' + since(best.t, true) + '</span>' : ''
+    })
+  }
+
+  // short: the compact form for narrow screens.
+  function since (t, short) {
+    if (t === null) return short ? '10 min' : 'last 10 min'
+    var min = Math.max(0, Math.round((Date.now() - t) / 60000))
+    if (min < 1) return 'just now'
+    if (min < 60) return min + (short ? ' min' : ' min ago')
+    if (min < 1440) return Math.floor(min / 60) + ' h ' + two(min % 60) + (short ? '' : ' min ago')
+    return dm(t) + ' ' + hm(t)
   }
 
   // ---- formatting ---------------------------------------------------------
@@ -396,6 +439,7 @@
     if (selected >= 0 && points[selected]) cross(c, d, list, X, Y, S, D, ink)
     legend(list)
     summary(list)
+    showMaxima()
   }
 
   function timeAxis (c, r, start, end, X, yTop, yBottom, rule, muted, labels) {

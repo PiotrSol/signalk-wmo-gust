@@ -95,6 +95,8 @@ The plugin includes a web app, **WMO Wind**, under **Web Apps** in the Signal K 
 - **gusts**: the WMO 3-second gust, the absolute maximum (highest single sample), or both, at 10 m or at sensor height;
 - the 10-minute **mean direction**, as arrows pointing downwind, with the direction the wind comes from in degrees.
 
+Under the WMO gust and 10-minute peak tiles, the app also shows the highest value of the chosen period and how long ago it was, for example `3 h max 29.2 · 2 h 20 min ago`. When it was more than 24 hours ago, the date and time are shown instead. That time is the middle of the history point, so it is accurate to within half a point: 30 seconds for 1 and 3 hours, 2.5 minutes for 24 hours, 7.5 minutes for 72 hours.
+
 Touch or click a chart to read the values at that moment. Units are knots or m/s, and a night mode keeps the screen dark.
 
 The app reads the **Signal K History API**, so a history provider must record this plugin's paths, for example **signalk-questdb**. It works without logging in, so it can run on Garmin chartplotters with OneHelm, for example through **signalk-garmin-onehelm**. It uses no external libraries or fonts, so it works offline.

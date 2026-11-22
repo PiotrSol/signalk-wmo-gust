@@ -3,6 +3,13 @@
 All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.4.3
+
+_2026-11-22_
+
+### Added
+- Under the WMO gust and 10-minute peak tiles, the wind history app shows the highest value of the chosen period (1, 3, 24 or 72 hours) and how long ago it was; older than 24 hours, the date and time instead.
+
 ## 0.4.2
 
 _2026-11-19_
